@@ -39,11 +39,27 @@ try {
       })
     }
   })
-  app.get("/questions/:category", async (req, res) => {
+
+  app.get("/categories/:category", async (req, res) => {
     try {
       const category = await Category.find({ name: req.params.category })
       res.json({
         category
+      })
+    } catch (error) {
+      res.json({
+        error: {
+          message: error.message,
+          stack: error.stack
+        }
+      })
+    }
+  })
+  app.get("/questions/:id", async (req, res) => {
+    try {
+      const question = await Question.find({ _id: req.params.id })
+      res.json({
+        question
       })
     } catch (error) {
       res.json({
