@@ -1,12 +1,16 @@
 const express = require("express")
 const mongoose = require("mongoose")
 const bodyParser = require("body-parser")
+const { OAuth2Client } = require("google-auth-library")
+const jwt = require("jsonwebtoken")
 const { User, Question, Category } = require("./schema")
 
-const mongooseUri =
+const secret =
   process.env.NODE_ENV === "production"
-    ? process.env.MONGOOSE_URI
-    : require("./secrets.json").MONGOOSE_SRV
+    ? process.env
+    : require("./secrets.json")
+
+const mongooseUri = secret.MONGOOSE_SRV
 try {
   mongoose.connect(
     mongooseUri,
@@ -24,7 +28,7 @@ try {
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: true }))
 
-  const port = process.env.NODE_ENV === "production" ? process.env.PORT : 3000
+  const port = secret.PORT
 
   app.get("/", (req, res) => res.send("web-dev-prep-server"))
   app.get("/categories", async (req, res) => {
@@ -110,6 +114,67 @@ try {
         ])
         res.json({
           question: savedQuestion
+        })
+      }
+    } catch (error) {
+      res.json({
+        error: {
+          message: error.message,
+          stack: error.stack
+        }
+      })
+    }
+  })
+
+  app.get("/users/:googleId/", async (req, res) => {
+    try {
+      const user = await User.findOne({ googleId: req.params.googleId })
+      user ? res.json({ user }) : res.json({ user: null })
+    } catch (error) {
+      res.json({
+        error: {
+          message: error.message,
+          stack: error.stack
+        }
+      })
+    }
+  })
+
+  app.get("/users/:googleId/token", async (req, res) => {
+    try {
+      const client = new OAuth2Client(secret.GOOGLE_API_KEY)
+      const [ticket, foundUser] = await Promise.all([
+        client.verifyIdToken({
+          idToken: req.headers.id_token,
+          audience: secret.QUIZ_APP_CLIENT_ID
+        }),
+        User.findOne({ googleId: req.params.googleId })
+      ])
+      const payload = ticket.getPayload()
+
+      if (foundUser) {
+        const profileToken = await jwt.sign(
+          { googleId: foundUser.googleId },
+          secret.PROFILE_TOKEN_SECRET
+        )
+        res.json({
+          profileToken
+        })
+      } else {
+        const newUser = new User({
+          googleId: req.params.googleId,
+          correctQuestions: [],
+          wrongQuestions: []
+        })
+        const [savedUser, profileToken] = await Promise.all([
+          newUser.save(),
+          jwt.sign(
+            { googleId: req.params.googleId },
+            secret.PROFILE_TOKEN_SECRET
+          )
+        ])
+        res.json({
+          profileToken
         })
       }
     } catch (error) {
