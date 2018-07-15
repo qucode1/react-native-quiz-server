@@ -33,7 +33,16 @@ try {
   app.get("/", (req, res) => res.send("web-dev-prep-server"))
   app.get("/categories", async (req, res) => {
     try {
-      res.json(await Category.find())
+      if (req.query.populate && JSON.parse(req.query.populate)) {
+        res.json(
+          await Category.find().populate({
+            path: "questions",
+            model: "Question"
+          })
+        )
+      } else {
+        res.json(await Category.find())
+      }
     } catch (error) {
       res.json({
         error: {
