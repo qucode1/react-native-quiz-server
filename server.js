@@ -46,10 +46,22 @@ try {
 
   app.get("/categories/:category", async (req, res) => {
     try {
-      const category = await Category.find({ name: req.params.category })
-      res.json({
-        category
-      })
+      if (req.query.populate && JSON.parse(req.query.populate)) {
+        const category = await Category.find({
+          name: req.params.category
+        }).populate({
+          path: "questions",
+          model: "Question"
+        })
+        res.json({
+          category
+        })
+      } else {
+        const category = await Category.find({ name: req.params.category })
+        res.json({
+          category
+        })
+      }
     } catch (error) {
       res.json({
         error: {
