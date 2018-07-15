@@ -47,7 +47,7 @@ try {
   app.get("/categories/:category", async (req, res) => {
     try {
       if (req.query.populate && JSON.parse(req.query.populate)) {
-        const category = await Category.find({
+        const category = await Category.findOne({
           name: req.params.category
         }).populate({
           path: "questions",
@@ -57,7 +57,7 @@ try {
           category
         })
       } else {
-        const category = await Category.find({ name: req.params.category })
+        const category = await Category.findOne({ name: req.params.category })
         res.json({
           category
         })
@@ -73,7 +73,7 @@ try {
   })
   app.get("/questions/:id", async (req, res) => {
     try {
-      const question = await Question.find({ _id: req.params.id })
+      const question = await Question.findOne({ _id: req.params.id })
       res.json({
         question
       })
