@@ -1,0 +1,10 @@
+{
+  "env": {
+    "MONGOOSE_SRV": "@dev-quiz-mongo-url",
+    "PROFILE_TOKEN_SECRET": "@dev-quiz-profile-token-secret",
+    "GOOGLE_API_KEY": "@dev-quiz-google-api-key",
+    "QUIZ_APP_CLIENT_ID": "@dev-quiz-app-google-client-id",
+    "PORT": "@dev-quiz-port",
+    "NODE_ENV": "production"
+  }
+}
