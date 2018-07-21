@@ -4,6 +4,12 @@ const bodyParser = require("body-parser")
 const { OAuth2Client } = require("google-auth-library")
 const jwt = require("jsonwebtoken")
 const { User, Question, Category } = require("./schema")
+const cors = require("cors")
+
+corsOptions = {
+  origin: ["http://localhost:3000"],
+  optionsSuccessStatus: 200
+}
 
 const secret =
   process.env.NODE_ENV === "production"
@@ -25,6 +31,8 @@ try {
   })
 
   const app = express()
+
+  app.use(cors(corsOptions))
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: true }))
 
@@ -98,8 +106,10 @@ try {
 
   app.post("/questions/add", async (req, res) => {
     try {
+      console.log("questions add body", req.body)
       const foundCategory = await Category.findOne({ name: req.body.category })
       const questionId = new mongoose.Types.ObjectId()
+      console.log("found category", foundCategory)
       if (foundCategory) {
         foundCategory.questions = [...foundCategory.questions, questionId]
         const [savedQuestion, updatedCategory] = await Promise.all([
@@ -166,8 +176,7 @@ try {
       const client = new OAuth2Client(secret.GOOGLE_API_KEY)
       const [ticket, foundUser] = await Promise.all([
         client.verifyIdToken({
-          idToken: req.headers.id_token,
-          audience: secret.QUIZ_APP_CLIENT_ID
+          idToken: req.headers.id_token
         }),
         User.findOne({ googleId: req.params.googleId })
       ])
@@ -175,7 +184,7 @@ try {
 
       if (foundUser) {
         const profileToken = await jwt.sign(
-          { googleId: foundUser.googleId },
+          { googleId: foundUser.googleId, role: foundUser.role },
           secret.PROFILE_TOKEN_SECRET
         )
         res.json({
@@ -208,7 +217,7 @@ try {
     }
   })
 
-  app.listen(3000, () =>
+  app.listen(port, () =>
     console.log(`web-dev-prep-server running on port ${port}`)
   )
 } catch (err) {

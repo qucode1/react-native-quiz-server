@@ -7,6 +7,11 @@ var userSchema = new Schema({
     required: true,
     unique: true
   },
+  role: {
+    type: String,
+    required: true,
+    default: "user"
+  },
   correctQuestions: [Schema.Types.ObjectId],
   wrongQuestions: [Schema.Types.ObjectId]
 })
